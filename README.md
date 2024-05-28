@@ -2,11 +2,9 @@
 
 Britto is a configurable birthday reminder tool that keeps track of birthdays and reminds you of upcoming ones. It's designed to be simple, lightweight, and efficient.
 
-## Features
-
-- **Easy Configuration**: Add birthdays to the config file and Britto will handle the rest.
-- **Flexible Reminder**: Britto reminds you of upcoming birthdays every time you open your terminal.
-- **Supports Various Shells**: Britto can be integrated into `.shrc`, `.kshrc`, `.bashrc`, `.zshrc`, or any other shell configuration file you use.
+## (non)Features
+- Britto is small, it doesn't receive any CLi arguments
+- There won't be any new features apart from simply reminding you of dates
 
 ## Installation
 
