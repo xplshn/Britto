@@ -22,7 +22,7 @@ Date=10/05
 
 ## Usage
 Britto automatically reminds you of upcoming birthdays every time you open your terminal or launch it. It checks the configuration file for upcoming birthdays and displays reminders if they are within a 10-day window. If no one's birthday is near, Britto will not output anything.
-[Demo of Britto. New shell session, first line says "[Jazmin]'s birthday is in 2 days! 30/05", second line shows a clean PS1 prompt.](https://i.ibb.co/3vgTbC1/2024-05-28-023505-637x165-scrot.png)
+![Demo of Britto. New shell session, first line says "[Jazmin]'s birthday is in 2 days! 30/05", second line shows a clean PS1 prompt.](https://i.ibb.co/3vgTbC1/2024-05-28-023505-637x165-scrot.png)
 
 
 ## License
