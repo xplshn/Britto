@@ -25,4 +25,4 @@ Britto automatically reminds you of upcoming birthdays every time you open your 
 
 ## License
 
-This project is licensed under the 3BSD License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the RABRMS License - see the [LICENSE](LICENSE) file for details. A flexible and non-copylefted license.
