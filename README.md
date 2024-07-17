@@ -34,6 +34,7 @@ Example `britto.toml`:
 [ReminderRange]
   Birthdays = 10
   Events = 15
+```
 
 ## Usage
 Britto automatically reminds you of upcoming birthdays every time you open your terminal or launch it. It checks the configuration file for upcoming birthdays and displays reminders if they are within a 10-day window. If no one's birthday is near, Britto will not output anything.
