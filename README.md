@@ -1,6 +1,6 @@
 # Britto
 
-Britto is a configurable birthday reminder tool that keeps track of birthdays and reminds you of upcoming ones. It's designed to be simple, lightweight, and efficient.
+Britto is a small and configurable reminder tool for events and birthdays. It's designed to be simple, lightweight, and efficient.
 
 ## Installation
 
@@ -8,17 +8,32 @@ To use Britto, simply add it to your shell's startup configuration file.
 
 ## Configuration
 
-Britto uses a simple configuration file (`britto.ini`) to store birthday information. Each person's birthday is added as a section in the config file, with the name of the person as the section header and the date of birth in the format `DD/MM/YYYY` or `DD/MM`.
+Britto uses a simple configuration file (`britto.toml`) to store event and birthday information. Each reminder is added as an entry in the config file, with details including the name, date, and an optional custom message.
 
-Example `britto.ini`:
+Example `britto.toml`:
 
-```ini
-[John Doe]
-Date=25/12/1985
+```toml
+[[Birthday]]
+  Name = "John Doe"
+  Date = "25/12/1985"
 
-[Alice Smith]
-Date=10/05
-```
+[[Birthday]]
+  Name = "Alice Smith"
+  Date = "10/05"
+
+[[Reminder]]
+  Name = "Project Deadline"
+  Date = "15/07"
+  Message = "Submit the project report"
+
+[[Reminder]]
+  Name = "Meeting"
+  Date = "20/07/2024"
+  OneTimeEvent = true
+
+[ReminderRange]
+  Birthdays = 10
+  Events = 15
 
 ## Usage
 Britto automatically reminds you of upcoming birthdays every time you open your terminal or launch it. It checks the configuration file for upcoming birthdays and displays reminders if they are within a 10-day window. If no one's birthday is near, Britto will not output anything.
