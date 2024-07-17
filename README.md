@@ -37,7 +37,7 @@ Example `britto.toml`:
 ```
 
 ## Usage
-Britto automatically reminds you of upcoming birthdays every time you open your terminal or launch it. It checks the configuration file for upcoming birthdays and displays reminders if they are within a 10-day window. If no one's birthday is near, Britto will not output anything.
+Britto automatically reminds you of upcoming events, such as birthdays, every time you open your terminal or launch it. It checks the configuration file for upcoming events and displays reminders if they are within a configurable 10-day window. If there aren't any events nearing the day, Britto will not output anything.
 
 ## License
 
