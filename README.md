@@ -16,6 +16,7 @@ Example `britto.toml`:
 [[Birthday]]
   Name = "John Doe"
   Date = "25/12/1985"
+  ReminderRange = 20
 
 [[Birthday]]
   Name = "Alice Smith"
