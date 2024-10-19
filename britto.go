@@ -90,16 +90,27 @@ var defaultConfig = Config{
 	Template: defaultTemplate,
 }
 
-func loadConfig(configPath string) (*Config, error) {
-	file, err := os.Open(configPath)
+func loadConfig(configDir string) (*Config, error) {
+	files, err := filepath.Glob(filepath.Join(configDir, "*.toml"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to list toml files: %v", err)
 	}
-	defer file.Close()
+
+	if len(files) == 0 {
+		return nil, fmt.Errorf("no toml files found in directory: %s", configDir)
+	}
 
 	var config Config
-	if _, err := toml.DecodeReader(file, &config); err != nil {
-		return nil, err
+	for _, file := range files {
+		f, err := os.Open(file)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open config file %s: %v", file, err)
+		}
+		defer f.Close()
+
+		if _, err := toml.DecodeReader(f, &config); err != nil {
+			return nil, fmt.Errorf("failed to decode toml file %s: %v", file, err)
+		}
 	}
 
 	return &config, nil
@@ -163,7 +174,7 @@ func parseDate(dateStr string, now time.Time, oneTimeEvent bool) (time.Time, int
 	return date, year, nil
 }
 
-func processReminders(reminders []Reminder, now time.Time, defaultMsg string, isBirthday bool, defaultRange int, templateCfg TemplateConfig) {
+func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defaultRange int, templateCfg TemplateConfig) {
 	for _, reminder := range reminders {
 		date, year, err := parseDate(reminder.Date, now, reminder.OneTimeEvent)
 		if err != nil {
@@ -188,9 +199,6 @@ func processReminders(reminders []Reminder, now time.Time, defaultMsg string, is
 			}
 
 			msg := reminder.Message
-			if msg == "" {
-				msg = defaultMsg
-			}
 
 			if isBirthday {
 				age := nextDate.Year() - year
@@ -248,20 +256,20 @@ func formatTemplate(tmplStr string, name string, ageOrDays string, due string, f
 }
 
 func main() {
-	configPathFlag := flag.String("config", "", "Path to the configuration file")
+	configPathFlag := flag.String("config", "", "Path to the configuration directory")
 	flag.Parse()
 
-	configPath := *configPathFlag
-	if configPath == "" {
+	configDir := *configPathFlag
+	if configDir == "" {
 		xdgConfigDir, err := os.UserConfigDir()
 		if err != nil {
 			log.Fatalf("Failed to get user config directory: %v", err)
 		}
 
-		configDir := filepath.Join(xdgConfigDir, "britto")
-		configPath = filepath.Join(configDir, defaultConfigFile)
+		configDir = filepath.Join(xdgConfigDir, "britto")
 
-		// If the config file doesn't exist, create the default config and directory
+		// If the config directory doesn't exist, create the default config and directory
+		configPath := filepath.Join(configDir, defaultConfigFile)
 		if _, err := os.Stat(configPath); os.IsNotExist(err) {
 			log.Printf("Config file does not exist. Creating a default config.")
 			err := saveDefaultConfig(configDir, configPath)
@@ -272,15 +280,15 @@ func main() {
 		}
 	}
 
-	config, err := loadConfig(configPath)
+	config, err := loadConfig(configDir)
 	if err != nil {
-		log.Fatalf("Failed to load config file: %v", err)
+		log.Fatalf("Failed to load config: %v", err)
 	}
 
 	now := time.Now().Truncate(24 * time.Hour) // Truncate to remove the time component
 
 	// Process birthday reminders
-	processReminders(config.Birthdays, now, "Birthday reminder", true, config.ReminderRange.Birthdays, config.Template)
+	processReminders(config.Birthdays, now, true, config.ReminderRange.Birthdays, config.Template)
 	// Process other reminders
-	processReminders(config.Reminders, now, "Reminder", false, config.ReminderRange.Events, config.Template)
+	processReminders(config.Reminders, now, false, config.ReminderRange.Events, config.Template)
 }
