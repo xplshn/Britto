@@ -42,4 +42,4 @@ Britto automatically reminds you of upcoming events, such as birthdays, every ti
 
 ## License
 
-This project is licensed under the RABRMS License - see the [LICENSE](LICENSE) file for details. A flexible and non-copylefted license.
+This project is licensed under the RABRMS License - see the [LICENSE](LICENSE) file for details. A 3BSD-compatible license.
