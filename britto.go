@@ -51,11 +51,11 @@ var defaultTemplate = TemplateConfig{
 	DueToday:        "today",
 	DueTomorrow:     "tomorrow",
 	DueIn:           "in {{.AgeOrDays}} days",
-	Birthday0:       "[{{.Name}}]'s birthday is {{.Due}}! {{.Date}}",
-	Birthday:        "[{{.Name}}] is turning {{.AgeOrDays}} years old {{.Due}}! {{.Date}}",
-	Reminder:        "[{{.Name}}] is due {{.Due}}! {{.Date}} - {{.Message}}",
-	DateFormat:      "02/01/2006",
-	DateFormatShort: "02/01",
+	Birthday0:       "[{{.Name}}]'s birthday is {{.Due}}! {{.Date}}\n{{.Message}}",
+	Birthday:        "[{{.Name}}] is turning {{.AgeOrDays}} years old {{.Due}}! {{.Date}}\n{{.Message}}",
+	Reminder:        "[{{.Name}}] is due {{.Due}}! {{.Date}}\n{{.Message}}",
+	DateFormat:      "DD/MM/YYYY",
+	DateFormatShort: "DD/MM",
 }
 
 var defaultConfig = Config{
@@ -135,6 +135,21 @@ func saveDefaultConfig(configDir, configPath string) error {
 	return nil
 }
 
+func convertDateFormat(dateStr string) string {
+	replacements := map[string]string{
+		"MM":   "01",
+		"DD":   "02",
+		"YYYY": "2006",
+		"YY":   "06",
+	}
+
+	for key, value := range replacements {
+		dateStr = strings.ReplaceAll(dateStr, key, value)
+	}
+
+	return dateStr
+}
+
 func parseDate(dateStr string, now time.Time) (time.Time, int, error) {
 	if dateStr == "" {
 		return time.Time{}, 0, fmt.Errorf("date not provided")
@@ -193,22 +208,19 @@ func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defa
 				due = strings.ReplaceAll(templateCfg.DueIn, "{{.AgeOrDays}}", strconv.Itoa(daysUntilDate))
 			}
 
+			var formattedMsg string
 			if isBirthday {
 				age := nextDate.Year() - year
 				tmpl := templateCfg.Birthday
 				if age == 0 {
 					tmpl = templateCfg.Birthday0
 				}
-				formattedMsg := formatTemplate(tmpl, reminder.Name, strconv.Itoa(age), due, nextDate.Format(templateCfg.DateFormat))
-				fmt.Println(formattedMsg)
+				formattedMsg = formatTemplate(tmpl, reminder.Name, strconv.Itoa(age), due, nextDate.Format(templateCfg.DateFormat), reminder.Message)
 			} else {
-				formattedMsg := formatTemplate(templateCfg.Reminder, reminder.Name, strconv.Itoa(daysUntilDate), due, nextDate.Format(templateCfg.DateFormat))
-				fmt.Println(formattedMsg)
+				formattedMsg = formatTemplate(templateCfg.Reminder, reminder.Name, strconv.Itoa(daysUntilDate), due, nextDate.Format(templateCfg.DateFormat), reminder.Message)
 			}
 
-			if reminder.Message != "" {
-				fmt.Println(reminder.Message)
-			}
+			fmt.Println(formattedMsg) // Print the final formatted message
 		}
 
 		for _, yearsAhead := range []int{0, 1} {
@@ -223,7 +235,7 @@ func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defa
 	}
 }
 
-func formatTemplate(tmplStr string, name string, ageOrDays string, due string, formattedDate string) string {
+func formatTemplate(tmplStr string, name string, ageOrDays string, due string, formattedDate string, message string) string {
 	tmpl, err := template.New("tmpl").Parse(tmplStr)
 	if err != nil {
 		log.Fatalf("Failed to parse template: %v", err)
@@ -235,6 +247,7 @@ func formatTemplate(tmplStr string, name string, ageOrDays string, due string, f
 		"AgeOrDays": ageOrDays,
 		"Due":       due,
 		"Date":      formattedDate,
+		"Message":   message,
 	}
 	err = tmpl.Execute(&buf, data)
 	if err != nil {
@@ -266,6 +279,9 @@ func main() {
 	}
 
 	now := time.Now()
+
+	config.Template.DateFormat = convertDateFormat(config.Template.DateFormat)
+	config.Template.DateFormatShort = convertDateFormat(config.Template.DateFormatShort)
 
 	processReminders(config.Birthdays, now, true, config.ReminderRange.Birthdays, config.Template)
 	processReminders(config.Reminders, now, false, config.ReminderRange.Events, config.Template)
