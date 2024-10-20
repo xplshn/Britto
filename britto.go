@@ -21,7 +21,6 @@ type Reminder struct {
 	Name          string `toml:"Name"`
 	Date          string `toml:"Date"`
 	Message       string `toml:"Message,omitempty"`
-	OneTimeEvent  bool   `toml:"OneTimeEvent,omitempty"`
 	ReminderRange *int   `toml:"ReminderRange,omitempty"`
 }
 
@@ -78,9 +77,9 @@ var defaultConfig = Config{
 			Message: "Don't forget about the Example Event!",
 		},
 		{
-			Name:         "Example Event 2",
-			Date:         "12/31/2024",
-			OneTimeEvent: true,
+			Name:          "Example Event 2",
+			Date:          "12/31/2024",
+			ReminderRange: intPtr(25),
 		},
 	},
 	ReminderRange: ReminderRange{
@@ -138,7 +137,7 @@ func saveDefaultConfig(configDir, configPath string) error {
 	return nil
 }
 
-func parseDate(dateStr string, now time.Time, oneTimeEvent bool) (time.Time, int, error) {
+func parseDate(dateStr string, now time.Time) (time.Time, int, error) {
 	if dateStr == "" {
 		return time.Time{}, 0, fmt.Errorf("date not provided")
 	}
@@ -167,18 +166,20 @@ func parseDate(dateStr string, now time.Time, oneTimeEvent bool) (time.Time, int
 		return time.Time{}, 0, fmt.Errorf("invalid date format")
 	}
 
-	if oneTimeEvent && len(dateStr) != 10 {
-		return time.Time{}, 0, fmt.Errorf("one-time event requires year specification")
-	}
-
 	return date, year, nil
 }
 
 func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defaultRange int, templateCfg TemplateConfig) {
 	for _, reminder := range reminders {
-		date, year, err := parseDate(reminder.Date, now, reminder.OneTimeEvent)
+		date, year, err := parseDate(reminder.Date, now)
 		if err != nil {
 			log.Printf("[%s]: Failed to parse date: %v", reminder.Name, err)
+			continue
+		}
+
+		// Skip reminders for dates in the past if a year is provided
+		if year > 0 && now.Year() > year {
+			// Skip reminders if the year of the event has passed
 			continue
 		}
 
@@ -291,4 +292,8 @@ func main() {
 	processReminders(config.Birthdays, now, true, config.ReminderRange.Birthdays, config.Template)
 	// Process other reminders
 	processReminders(config.Reminders, now, false, config.ReminderRange.Events, config.Template)
+}
+
+func intPtr(i int) *int {
+	return &i
 }
