@@ -145,20 +145,23 @@ func parseDate(dateStr string, now time.Time) (time.Time, int, error) {
 	var year int
 
 	if len(dateStr) == 5 {
-		// Parse date without year
+		// Parse date without year (MM/DD)
 		date, err = time.Parse("02/01", dateStr)
 		if err == nil {
 			year = now.Year()
-			date = time.Date(year, date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
+			date = time.Date(year, date.Month(), date.Day(), 0, 0, 0, 0, now.Location())
+
+			// If the parsed date has passed this year, set it to next year
+			if date.Before(now) {
+				year++
+				date = time.Date(year, date.Month(), date.Day(), 0, 0, 0, 0, now.Location())
+			}
 		}
 	} else if len(dateStr) == 10 {
-		// Parse date with year
+		// Parse date with year (MM/DD/YYYY)
 		date, err = time.Parse("02/01/2006", dateStr)
 		if err == nil {
-			year, err = strconv.Atoi(dateStr[6:])
-			if err != nil {
-				return time.Time{}, 0, fmt.Errorf("failed to parse year: %v", err)
-			}
+			year = date.Year()
 		}
 	} else {
 		return time.Time{}, 0, fmt.Errorf("invalid date format")
@@ -172,11 +175,6 @@ func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defa
 		date, year, err := parseDate(reminder.Date, now)
 		if err != nil {
 			log.Printf("[%s]: Failed to parse date: %v", reminder.Name, err)
-			continue
-		}
-
-		// Skip reminders for dates in the past if a year is provided
-		if year > 0 && now.Year() > year {
 			continue
 		}
 
@@ -195,8 +193,6 @@ func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defa
 				due = strings.ReplaceAll(templateCfg.DueIn, "{{.AgeOrDays}}", strconv.Itoa(daysUntilDate))
 			}
 
-			msg := reminder.Message
-
 			if isBirthday {
 				age := nextDate.Year() - year
 				tmpl := templateCfg.Birthday
@@ -206,20 +202,17 @@ func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defa
 				formattedMsg := formatTemplate(tmpl, reminder.Name, strconv.Itoa(age), due, nextDate.Format(templateCfg.DateFormat))
 				fmt.Println(formattedMsg)
 			} else {
-				formattedMsg := formatTemplate(templateCfg.Reminder, reminder.Name, strconv.Itoa(daysUntilDate), due, nextDate.Format(templateCfg.DateFormatShort))
+				formattedMsg := formatTemplate(templateCfg.Reminder, reminder.Name, strconv.Itoa(daysUntilDate), due, nextDate.Format(templateCfg.DateFormat))
 				fmt.Println(formattedMsg)
 			}
 
-			if msg != "" {
-				fmt.Println(msg)
+			if reminder.Message != "" {
+				fmt.Println(reminder.Message)
 			}
 		}
 
 		for _, yearsAhead := range []int{0, 1} {
-			nextDate := time.Date(now.Year()+yearsAhead, date.Month(), date.Day(), 0, 0, 0, 0, time.UTC)
-			if nextDate.Before(now) {
-				continue
-			}
+			nextDate := time.Date(now.Year()+yearsAhead, date.Month(), date.Day(), 0, 0, 0, 0, now.Location())
 
 			daysUntilDate := int(nextDate.Sub(now).Hours() / 24)
 			if daysUntilDate <= rangeDays && daysUntilDate >= 0 {
