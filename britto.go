@@ -160,7 +160,7 @@ func parseDate(dateStr string, now time.Time) (time.Time, int, error) {
 	var year int
 
 	if len(dateStr) == 5 {
-		// Parse date without year (DD/YY)
+		// Parse date without year (DD/MM)
 		date, err = time.Parse("02/01", dateStr)
 		if err == nil {
 			year = now.Year()
@@ -186,6 +186,9 @@ func parseDate(dateStr string, now time.Time) (time.Time, int, error) {
 }
 
 func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defaultRange int, templateCfg TemplateConfig) {
+	// Truncate the current time to midnight (00:00:00)
+	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
 	for _, reminder := range reminders {
 		date, year, err := parseDate(reminder.Date, now)
 		if err != nil {
@@ -224,8 +227,10 @@ func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defa
 		}
 
 		for _, yearsAhead := range []int{0, 1} {
+			// Truncate nextDate to midnight to avoid time component issues
 			nextDate := time.Date(now.Year()+yearsAhead, date.Month(), date.Day(), 0, 0, 0, 0, now.Location())
 
+			// Calculate days between now and nextDate
 			daysUntilDate := int(nextDate.Sub(now).Hours() / 24)
 			if daysUntilDate <= rangeDays && daysUntilDate >= 0 {
 				printReminder(daysUntilDate, nextDate, year)
