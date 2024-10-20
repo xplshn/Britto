@@ -179,7 +179,6 @@ func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defa
 
 		// Skip reminders for dates in the past if a year is provided
 		if year > 0 && now.Year() > year {
-			// Skip reminders if the year of the event has passed
 			continue
 		}
 
