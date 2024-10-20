@@ -20,8 +20,8 @@ const defaultConfigFile = "britto.toml"
 type Reminder struct {
 	Name          string `toml:"Name"`
 	Date          string `toml:"Date"`
-	Message       string `toml:"Message,omitempty"`
-	ReminderRange *int   `toml:"ReminderRange,omitempty"`
+	Message       string `toml:"Message"`
+	ReminderRange *int   `toml:"ReminderRange"`
 }
 
 type ReminderRange struct {
