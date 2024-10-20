@@ -33,11 +33,11 @@ type TemplateConfig struct {
 	DueToday        string `toml:"due_today"`
 	DueTomorrow     string `toml:"due_tomorrow"`
 	DueIn           string `toml:"due_in"`
-	DateFormatShort string `toml:"date_format_short"`
-	DateFormat      string `toml:"date_format"`
 	Birthday0       string `toml:"Birthday0"`
 	Birthday        string `toml:"Birthday"`
 	Reminder        string `toml:"Reminder"`
+	DateFormat      string `toml:"DateFormat"`
+	DateFormatShort string `toml:"DateFormatShort"`
 }
 
 type Config struct {
@@ -50,12 +50,12 @@ type Config struct {
 var defaultTemplate = TemplateConfig{
 	DueToday:        "today",
 	DueTomorrow:     "tomorrow",
-	DueIn:           "in {{.AgeOrDays}} days", // This refers to the number of days for reminders
-	DateFormatShort: "01/06",
-	DateFormat:      "02/01/2006",
-	Birthday0:       "[{{.Name}}]'s birthday is {{.Due}}! {{.Date}}\n", // Use Name and Date
+	DueIn:           "in {{.AgeOrDays}} days",
+	Birthday0:       "[{{.Name}}]'s birthday is {{.Due}}! {{.Date}}",
 	Birthday:        "[{{.Name}}] is turning {{.AgeOrDays}} years old {{.Due}}! {{.Date}}",
-	Reminder:        "[{{.Name}}] is due {{.Due}}! {{.Date}} - {{.Due}}",
+	Reminder:        "[{{.Name}}] is due {{.Due}}! {{.Date}} - {{.Message}}",
+	DateFormat:      "02/01/2006",
+	DateFormatShort: "02/01",
 }
 
 var defaultConfig = Config{
@@ -67,7 +67,7 @@ var defaultConfig = Config{
 		{
 			Name:    "Example Person 2",
 			Date:    "07/01/2000",
-			Message: "Example Person's birthday is on 07/01/2000. Remember to buy a present",
+			Message: "Remember to buy a present",
 		},
 	},
 	Reminders: []Reminder{
@@ -116,13 +116,11 @@ func loadConfig(configDir string) (*Config, error) {
 }
 
 func saveDefaultConfig(configDir, configPath string) error {
-	// Ensure the directory exists
 	err := os.MkdirAll(configDir, 0755)
 	if err != nil {
 		return fmt.Errorf("failed to create config directory: %v", err)
 	}
 
-	// Create the default config file
 	file, err := os.Create(configPath)
 	if err != nil {
 		return fmt.Errorf("failed to create config file: %v", err)
@@ -179,11 +177,9 @@ func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defa
 
 		// Skip reminders for dates in the past if a year is provided
 		if year > 0 && now.Year() > year {
-			// Skip reminders if the year of the event has passed
 			continue
 		}
 
-		// Override the global range if specified
 		rangeDays := defaultRange
 		if reminder.ReminderRange != nil {
 			rangeDays = *reminder.ReminderRange
@@ -214,7 +210,6 @@ func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defa
 				fmt.Println(formattedMsg)
 			}
 
-			// Print the message if it exists
 			if msg != "" {
 				fmt.Println(msg)
 			}
@@ -244,7 +239,7 @@ func formatTemplate(tmplStr string, name string, ageOrDays string, due string, f
 	var buf bytes.Buffer
 	data := map[string]string{
 		"Name":      name,
-		"AgeOrDays": ageOrDays, // Depending on whether it's a birthday or event
+		"AgeOrDays": ageOrDays,
 		"Due":       due,
 		"Date":      formattedDate,
 	}
@@ -256,44 +251,29 @@ func formatTemplate(tmplStr string, name string, ageOrDays string, due string, f
 	return buf.String()
 }
 
+func intPtr(i int) *int {
+	return &i
+}
+
 func main() {
-	configPathFlag := flag.String("config", "", "Path to the configuration directory")
+	configDir := flag.String("config", os.Getenv("HOME")+"/.config/britto", "Directory where the config is stored")
 	flag.Parse()
 
-	configDir := *configPathFlag
-	if configDir == "" {
-		xdgConfigDir, err := os.UserConfigDir()
-		if err != nil {
-			log.Fatalf("Failed to get user config directory: %v", err)
-		}
+	configPath := filepath.Join(*configDir, defaultConfigFile)
 
-		configDir = filepath.Join(xdgConfigDir, "britto")
-
-		// If the config directory doesn't exist, create the default config and directory
-		configPath := filepath.Join(configDir, defaultConfigFile)
-		if _, err := os.Stat(configPath); os.IsNotExist(err) {
-			log.Printf("Config file does not exist. Creating a default config.")
-			err := saveDefaultConfig(configDir, configPath)
-			if err != nil {
-				log.Fatalf("Failed to save default config: %v", err)
-			}
-			log.Printf("Default config saved to %s. Please edit it with your reminders.", configPath)
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		if err := saveDefaultConfig(*configDir, configPath); err != nil {
+			log.Fatalf("Failed to create default config file: %v", err)
 		}
 	}
 
-	config, err := loadConfig(configDir)
+	config, err := loadConfig(*configDir)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	now := time.Now().Truncate(24 * time.Hour) // Truncate to remove the time component
+	now := time.Now()
 
-	// Process birthday reminders
 	processReminders(config.Birthdays, now, true, config.ReminderRange.Birthdays, config.Template)
-	// Process other reminders
 	processReminders(config.Reminders, now, false, config.ReminderRange.Events, config.Template)
-}
-
-func intPtr(i int) *int {
-	return &i
 }
