@@ -160,7 +160,7 @@ func parseDate(dateStr string, now time.Time) (time.Time, int, error) {
 	var year int
 
 	if len(dateStr) == 5 {
-		// Parse date without year (MM/DD)
+		// Parse date without year (DD/YY)
 		date, err = time.Parse("02/01", dateStr)
 		if err == nil {
 			year = now.Year()
@@ -173,7 +173,7 @@ func parseDate(dateStr string, now time.Time) (time.Time, int, error) {
 			}
 		}
 	} else if len(dateStr) == 10 {
-		// Parse date with year (MM/DD/YYYY)
+		// Parse date with year (DD/MM/YYYY)
 		date, err = time.Parse("02/01/2006", dateStr)
 		if err == nil {
 			year = date.Year()
