@@ -51,9 +51,9 @@ var defaultTemplate = TemplateConfig{
 	DueToday:        "today",
 	DueTomorrow:     "tomorrow",
 	DueIn:           "in {{.AgeOrDays}} days",
-	Birthday0:       "[{{.Name}}]'s birthday is {{.Due}}! {{.Date}}\n{{.Message}}",
-	Birthday:        "[{{.Name}}] is turning {{.AgeOrDays}} years old {{.Due}}! {{.Date}}\n{{.Message}}",
-	Reminder:        "[{{.Name}}] is due {{.Due}}! {{.Date}}\n{{.Message}}",
+	Birthday0:       "[{{.Name}}]'s birthday is {{.Due}}! {{.Date}} {{.Message}}",
+	Birthday:        "[{{.Name}}] is turning {{.AgeOrDays}} years old {{.Due}}! {{.Date}} {{.Message}}",
+	Reminder:        "[{{.Name}}] is due {{.Due}}! {{.Date}} {{.Message}}",
 	DateFormat:      "DD/MM/YYYY",
 	DateFormatShort: "DD/MM",
 }
