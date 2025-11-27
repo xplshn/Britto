@@ -21,6 +21,7 @@ type Reminder struct {
 	Name          string `toml:"Name"`
 	Date          string `toml:"Date"`
 	Message       string `toml:"Message"`
+	OneTimeEvent  bool   `toml:"OneTimeEvent"`
 	ReminderRange *int   `toml:"ReminderRange"`
 }
 
@@ -194,6 +195,14 @@ func processReminders(reminders []Reminder, now time.Time, isBirthday bool, defa
 		if err != nil {
 			log.Printf("[%s]: Failed to parse date: %v", reminder.Name, err)
 			continue
+		}
+
+		if reminder.OneTimeEvent {
+			if year < now.Year() ||
+				(year < now.Year() && date.Month() < now.Month()) ||
+				(year < now.Year() && date.Month() < now.Month() && date.Day() < now.Day()) {
+				continue
+			}
 		}
 
 		rangeDays := defaultRange
